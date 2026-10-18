@@ -1,0 +1,26 @@
+{
+  "lexicon": 1,
+  "id": "org.jason-edelman.oscity.same",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "The author says a report describes the same issue they see. It can also name other reports the author believes are the same issue, so they can be combined.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "createdAt"],
+        "properties": {
+          "subject": { "type": "ref", "ref": "com.atproto.repo.strongRef", "description": "An org.jason-edelman.oscity.report." },
+          "others": {
+            "type": "array",
+            "maxLength": 10,
+            "description": "Other reports the author believes are the same issue.",
+            "items": { "type": "ref", "ref": "com.atproto.repo.strongRef" }
+          },
+          "text": { "type": "string", "maxLength": 3000, "maxGraphemes": 300 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

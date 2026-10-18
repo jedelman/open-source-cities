@@ -1,0 +1,34 @@
+{
+  "lexicon": 1,
+  "id": "org.jason-edelman.oscity.defs",
+  "defs": {
+    "image": {
+      "type": "object",
+      "description": "A photo with the alt text that describes it.",
+      "required": ["image", "alt"],
+      "properties": {
+        "image": { "type": "blob", "accept": ["image/jpeg", "image/png", "image/webp"], "maxSize": 1000000 },
+        "alt": { "type": "string", "maxLength": 10000, "maxGraphemes": 1000, "description": "Describes the photo for people who can't see it." }
+      }
+    },
+    "cityRef": {
+      "type": "object",
+      "description": "A record in the city's own systems that this refers to, such as a work order in an open data portal. Matching is the author's claim, not the city's.",
+      "required": ["system", "id"],
+      "properties": {
+        "system": { "type": "string", "maxLength": 200, "description": "Where the record lives, e.g. socrata:data.norfolk.gov/qzfe-wj25." },
+        "id": { "type": "string", "maxLength": 200, "description": "The record's identifier in that system." },
+        "url": { "type": "string", "format": "uri", "description": "A page where anyone can see the record." }
+      }
+    },
+    "money": {
+      "type": "object",
+      "description": "An amount of money as an estimate or an asking price. It never moves money.",
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "integer", "minimum": 0, "description": "In the currency's minor unit, e.g. cents." },
+        "currency": { "type": "string", "minLength": 3, "maxLength": 3, "description": "ISO 4217 code, e.g. USD." }
+      }
+    }
+  }
+}
