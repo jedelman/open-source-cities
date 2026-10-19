@@ -1,0 +1,18 @@
+{
+  "name": "open-source-cities",
+  "version": "0.0.1",
+  "private": true,
+  "description": "City work as signed changes in many people's atproto repos: report, combine, propose, claim, do, sign off.",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "h3-js": "^4.5.0"
+  },
+  "devDependencies": {
+    "@atproto/lexicon": "^0.5.0"
+  }
+}

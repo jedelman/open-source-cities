@@ -1,0 +1,39 @@
+{
+  "lexicon": 1,
+  "id": "org.jason-edelman.oscity.report",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "A neighbor reports a problem with shared infrastructure at a place: a pothole, a blocked drain, a dark streetlight. Reports are about things, never about people.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["location", "category", "createdAt"],
+        "properties": {
+          "location": {
+            "type": "union",
+            "description": "Where it is. An H3 cell alone means the author chose to publish only the area.",
+            "refs": [
+              "community.lexicon.location.geo",
+              "community.lexicon.location.address",
+              "community.lexicon.location.hthree"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 64,
+            "knownValues": ["pothole", "sidewalk", "drainage", "flooding", "streetlight", "signal", "sign", "tree", "litter", "other"]
+          },
+          "text": { "type": "string", "maxLength": 10000, "maxGraphemes": 1000, "description": "What the author sees." },
+          "images": {
+            "type": "array",
+            "maxLength": 4,
+            "items": { "type": "ref", "ref": "org.jason-edelman.oscity.defs#image" }
+          },
+          "cityRef": { "type": "ref", "ref": "org.jason-edelman.oscity.defs#cityRef" },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

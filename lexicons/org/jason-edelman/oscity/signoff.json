@@ -1,0 +1,26 @@
+{
+  "lexicon": 1,
+  "id": "org.jason-edelman.oscity.signoff",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Someone checks finished work and approves or rejects it, with reasons. Whose signoff counts is decided by whoever reads the records, not by this record.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "verdict", "createdAt"],
+        "properties": {
+          "subject": { "type": "ref", "ref": "com.atproto.repo.strongRef", "description": "An org.jason-edelman.oscity.done." },
+          "verdict": { "type": "string", "maxLength": 32, "knownValues": ["approve", "reject"] },
+          "text": { "type": "string", "maxLength": 10000, "maxGraphemes": 1000, "description": "Why. Required in practice for a reject." },
+          "images": {
+            "type": "array",
+            "maxLength": 4,
+            "items": { "type": "ref", "ref": "org.jason-edelman.oscity.defs#image" }
+          },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

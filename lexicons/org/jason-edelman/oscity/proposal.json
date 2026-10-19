@@ -1,0 +1,28 @@
+{
+  "lexicon": 1,
+  "id": "org.jason-edelman.oscity.proposal",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Anyone proposes a fix for one or more reports: what to do, how far it reaches, and what it might cost.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["reports", "title", "text", "createdAt"],
+        "properties": {
+          "reports": {
+            "type": "array",
+            "minLength": 1,
+            "maxLength": 20,
+            "description": "The org.jason-edelman.oscity.report records this fixes.",
+            "items": { "type": "ref", "ref": "com.atproto.repo.strongRef" }
+          },
+          "title": { "type": "string", "maxLength": 1000, "maxGraphemes": 100 },
+          "text": { "type": "string", "maxLength": 20000, "maxGraphemes": 2000, "description": "The fix, including whether it addresses the cause or only the symptom." },
+          "estimate": { "type": "ref", "ref": "org.jason-edelman.oscity.defs#money" },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}
