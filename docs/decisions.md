@@ -1,11 +1,10 @@
 # Decisions
 
-## 2026-10-18 — Phase 0 (Claude, for Jason to confirm or overturn)
+## 2026-10-18 — Phase 0 (Claude's calls, for Jason to confirm or overturn; namespace confirmed)
 
-**Namespace: `org.jason-edelman.oscity.*`.** This is the working name from the
-plan. **Rename now or never:** once real records exist in people's repos, a
-rename strands them. To rename, change the folder, the ids, and `NSID` in
-`src/records.js`; the path test catches anything missed.
+**Namespace: `org.jason-edelman.oscity.*`. Confirmed by Jason, 2026-10-19:
+"org.jason-edelman.oscity is good!"** It's fixed from here on: once real
+records exist in people's repos, a rename strands them.
 
 **Six record types, one per step of the pothole flow:** `report`, `same`,
 `proposal`, `claim`, `done`, `signoff`, plus `defs` (image, cityRef, money).
@@ -37,4 +36,4 @@ standalone app vs. skymap layer. See the plan's open questions.
 **Lexicon publication (later).** atproto resolves `org.jason-edelman.oscity.*`
 through a `_lexicon` TXT record on `oscity.jason-edelman.org`, pointing at the
 DID whose repo holds `com.atproto.lexicon.schema` records. Not done in phase 0;
-it needs Jason's DNS and the decision above about namespace.
+it needs Jason's DNS.
