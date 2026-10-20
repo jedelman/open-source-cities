@@ -7,8 +7,13 @@ Diagnostic, same chat, link target checked by Jason with "Copy link address":
 | Link asked for | Host | Wrapped? |
 |---|---|---|
 | `https://en.wikipedia.org/wiki/Norfolk,_Virginia#History` | live, well known | **no** |
-| `https://claude.jason-edelman.org/#test` | live, ours, little traffic | pending |
+| `https://claude.jason-edelman.org/#test` | live, ours, little traffic | **no** |
 
-If the second isn't wrapped, the cause is a host that doesn't resolve, and
-making `oscity.jason-edelman.org` live should fix it. If it is wrapped, Gemini
-wraps hosts it doesn't know, and a live host won't be enough on its own.
+**Reading:** the wrapping follows the host, not how famous the site is. A
+little-known live host isn't wrapped, so the likely cause is that
+`oscity.jason-edelman.org` doesn't resolve, and making it live should fix it.
+
+**Not yet ruled out:** the two diagnostic links were URLs Jason typed, while
+the blip links were ones Gemini built, with a long parameter-laden fragment.
+The control is a Gemini-built blip-shaped link on the live host, e.g. asking
+for `https://claude.jason-edelman.org/blip#cat=pothole&addr=3500+Granby+St,+Norfolk,+VA&lat=36.87786&lng=-76.27986`.
