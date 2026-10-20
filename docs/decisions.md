@@ -37,3 +37,27 @@ standalone app vs. skymap layer. See the plan's open questions.
 through a `_lexicon` TXT record on `oscity.jason-edelman.org`, pointing at the
 DID whose repo holds `com.atproto.lexicon.schema` records. Not done in phase 0;
 it needs Jason's DNS.
+
+## 2026-10-20 — Blips (Jason)
+
+**Location: H3 cells, with Nominatim for addresses.** "Use H3, same as our
+atproto maps," then, the same day, "can we use Nominatim?" The agent's `addr`
+and lat/lng guess ride in the URL fragment. The confirm page geocodes the
+address with Nominatim *from the browser* (our server never sees it), snaps the
+result to a res-8 cell, and the person taps to correct it. Only the cell is
+submitted. The public Nominatim instance (≤1 request/s) does for the test and
+a pilot; self-host or use a hosted provider at scale.
+
+**Gateway: we operate it for now, federated by design.** "I'm seeing it as
+something that can be federated since writes are non-conflicting." Each
+gateway is its own DID writing `blip` records to its own repo, and the indexer
+takes the union. Spent tokens are the only shared state, so tokens are bound
+to one gateway (origin name in the challenge, checked by the gateway itself,
+because the library's verify doesn't) and each gateway keeps its own spent set.
+
+**Privacy Pass is feasible** (`experiments/privacy-pass/`, run 2026-10-20).
+Use the native RSA-RAW path in the issuer, and batch-issue the weekly
+allowance.
+
+**Siren: co-agency becomes its main surface** (recorded in
+socrata-agent `docs/co-agency.md`).

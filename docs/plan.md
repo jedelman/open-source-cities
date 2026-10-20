@@ -125,12 +125,27 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
        (an invisible challenge, no button) would make it truly one click, but
        it gives up the confirmation step, and agents that drive a real browser
        would pass the challenge. Don't.
-   - **Address handling:** the agent may put a rough address in the link
-     instead of a cell. Put it in the URL *fragment* (`#addr=…`), which
-     browsers never send to the server. The page turns it into a cell in the
-     browser and submits only the cell, so the gateway never sees an address.
-     The geocoder the page calls still does. Choose one that doesn't keep
-     queries, or use the city's address dataset for Norfolk.
+   - **Location: H3 cells, with Nominatim for addresses (Jason, 2026-10-20).**
+     The agent puts an `addr` and its best-guess `lat`/`lng` in the URL
+     *fragment*, which browsers never send to the server. The confirm page
+     geocodes the `addr` with Nominatim (OpenStreetMap's geocoder) and falls
+     back to the agent's coordinates. It snaps the result to a res-8 cell with
+     h3-js, the same cells as the atproto maps, and the person taps the right
+     cell if it's off. Only the cell is submitted.
+     - **Strip the address once it's used.** After geocoding, the page
+       removes it from the URL (`history.replaceState`), so browser history
+       keeps only the cell. It matters most when the address is the person's
+       own ("outside my front door"; ChatGPT asked for it, 2026-10-20).
+     - **Call it from the browser, not the gateway**, so our server never sees
+       an address. Nominatim's operator does see the address and the person's
+       IP. Their log retention is unchecked, so check it before launch.
+     - **The public instance won't carry a swarm.** Its usage policy allows at
+       most 1 request/s per application, requires an identifying User-Agent
+       or Referer, and asks for caching. That's fine for the test and a small
+       pilot. At scale, self-host Nominatim on a Virginia extract (not on
+       Workers: it needs Postgres) or use a hosted Nominatim provider.
+     - **Baseline:** 11 of 11 test queries landed in the true cell
+       (`experiments/magic-link-test/README.md`).
    - **The ladder (Jason, 2026-10-20).** The confirm page offers optional
      sign-in, and each rung upgrades the same blip. None of them needs an app
      installed.
@@ -145,9 +160,12 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
         ID discarded. That's weaker, because it links a person's blips within
         a month. Either way the gateway never stores the account ID next to a
         cell: blips over time would reveal where someone lives, and that list
-        would be worth subpoenaing. Unknown: how much of Privacy Pass a Worker
-        can use off the shelf. If it's too much work, ship the fallback first
-        and say so.
+        would be worth subpoenaing. *Tested 2026-10-20*
+        (`experiments/privacy-pass/`): Cloudflare's `privacypass-ts` runs off
+        the shelf. The issuer and gateway work in workerd, and the client works
+        in Chromium. Issuing needs workerd's native RSA-RAW (about 1 ms versus
+        about 330 ms without it). Mint the week's allowance in one batch at
+        sign-in, so the issuer can't match an issue to a spend by timing.
      3. *Signed in with an atproto handle (OAuth, still just a web page):* the
         page writes a signed `report` into the person's own repo instead of a
         blip, and they're in the full app.
@@ -161,10 +179,39 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
      aggregate-only and unsigned, and a determined group of real people can
      still pile into one cell. The indexer shows spikes as spikes instead of
      averaging them in.
-   - **Test before building:** give ChatGPT, Gemini and claude.ai (free tiers)
-     a link template and see whether each prints a correct, clickable link
-     from a sentence like "the storm drain on Colley by the Harris Teeter
-     floods."
+   - **Test before building:** `experiments/magic-link-test/`. Each free agent
+     (ChatGPT, Gemini, claude.ai) gets the same instructions and nine cases.
+     The cases are built from addresses verified in the city's dataset, plus
+     one about a person that the agent should decline. A scorer checks the
+     category, that the fields are in the fragment, and the distance in H3
+     rings. Variant B, a fetch probe with code words, tests whether agents
+     can fetch a URL they built (that matters for Siren's co-agency).
+     **Run 2026-10-20** on Gemini and ChatGPT free tiers, plus Haiku
+     subagents. Categories and addresses were right every time, and every
+     address geocoded into the exact cell. Agents' own coordinates drifted up
+     to 4.4 km, so the address leads and the coordinates are only a fallback.
+     ChatGPT links work as delivered. Gemini wraps links to our host, which
+     isn't live yet, in a Google search link. Live hosts aren't wrapped, so DNS
+     probably fixes it. Results are in the kit's README.
+   - **Onboarding is one paste (Jason, 2026-10-20).** No model will know the
+     link format from general knowledge, so the person gives it to their
+     agent once, in either of two ways:
+     a link ("read oscity.jason-edelman.org/agents and help me report
+     something"), which the agent fetches to get the instructions, or the
+     instruction block itself, pasted. Both are fine. The paste works today
+     (Gemini, 8 of 8 on content). The link needs a live host and an agent
+     that fetches (variant B of the test). Both should serve the same text, so
+     the instructions live in one file. Installed carriers (a custom GPT, a
+     Gem, a connector) would skip even that step. Which free tiers allow them
+     is unchecked.
+   - **Federation (Jason, 2026-10-20).** We operate the first gateway. Blip
+     writes don't conflict (each gateway writes to its own repo, and the
+     indexer takes the union), so anyone can run another. The one piece of
+     shared state is *spent tokens*. Each gateway names itself as the origin
+     in its token challenges and checks that binding on redemption, so a token
+     minted for one gateway can't be spent at another. The library doesn't
+     check it; tested 2026-10-20. Each gateway keeps its own spent set. Anonymous blips sent to two
+     gateways count twice; at the bottom rung that's acceptable.
 
 ## Phases
 - **0 — Repo + lexicons + this plan.** Lexicon JSON validated the way skymap did
@@ -201,6 +248,6 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
    audiences differ.
 4. **Does Siren write** (its own DID, publishing mirrors), or only read?
 5. **Who signs off,** and is that where an atproto-iroh Table comes in?
-6. **Blips:** which geocoder does the confirm page use for addresses in the
-   URL fragment (a third party, or Norfolk's own address data)? And should the
-   gateway DID be Siren's, or a separate one?
+6. ~~**Blips:** geocoder; gateway DID.~~ Decided 2026-10-20: H3 with no
+   geocoder, and we operate a gateway of our own that others can federate
+   with (see `docs/decisions.md`).
