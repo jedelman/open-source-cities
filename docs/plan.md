@@ -83,6 +83,62 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
    text, rationale, tests = which real cases it would change). Ghent's HC-G2 /
    Table 3.6.11 amendment is a ready first patch. That ties ghent-zoning-reform
    in.
+6. **Blips: the swarm surface (Jason, 2026-10-20; not scheduled).** A second
+   way in, for people with no app and no atproto account: their own free-tier
+   chatbot files a *blip* by fetching a URL. Free agents can often fetch, but
+   they can't POST or sign. Each blip is a weak signal ("something's wrong with
+   drainage around here"). Read in aggregate, many blips show where the
+   trouble is. The app stays the way in for signed, actionable reports.
+   - **Aggregate signal, not reports.** A blip carries a category and an H3
+     res-8 cell. Nothing else: no text, no photos, no coordinates, no handle.
+     Free text would be a way to report a person, and the aggregate doesn't
+     need it. Area-only by construction, because query strings end up in
+     logs, browser history and the provider's transcript.
+   - **Who signs:** a gateway with its own DID writes each blip as a
+     `blip` record in its own repo, labelled as relayed and unsigned. A blip
+     is never a `report`. That keeps it public and rebuildable from the
+     firehose, and keeps signed reports undiluted. The indexer counts blips per
+     cell per category. Siren reads the counts in its own voice: "I see 14
+     relayed blips about drainage in this area this month, and 1 signed
+     report."
+   - **A human click submits (Jason, 2026-10-20; replaces the double GET).**
+     The agent only *writes a link*: a prefilled confirm URL it shows to the
+     person. The person opens it in their own browser. The page shows the blip
+     (category, and the cell on a map) with one Submit button. That button is a
+     POST behind a Cloudflare Turnstile check, so only a browser with a person
+     at it can submit.
+     - **No GET ever writes.** Link previews, prefetchers and the agent's own
+       fetch tool all land on a page that does nothing until Submit is pressed.
+     - **The agent doesn't need to fetch anything.** Every chatbot can print a
+       link, so the open question of whether free agents will fetch a URL they
+       built goes away.
+     - **Rate limits work again.** Submits come from people's own browsers,
+       not the providers' shared egress, and Turnstile is the throttle.
+     - **Prompt injection can't finish an attack.** A hostile page can make an
+       agent write a link, but a person still has to open it and press Submit.
+     - **The person checks what the agent understood.** If the cell on the map
+       is wrong, they tap the right one before submitting. That's the fix for
+       models geocoding badly.
+     - **Cost:** it's two actions (open, Submit), not one, and lower volume
+       than an agent-only swarm. But every blip has a person behind it, which
+       is worth more than a bigger, noisier count. Auto-submitting on page load
+       (an invisible challenge, no button) would make it truly one click, but
+       it gives up the confirmation step, and agents that drive a real browser
+       would pass the challenge. Don't.
+   - **Address handling:** the agent may put a rough address in the link
+     instead of a cell. Put it in the URL *fragment* (`#addr=…`), which
+     browsers never send to the server. The page turns it into a cell in the
+     browser and submits only the cell, so the gateway never sees an address.
+     The geocoder the page calls still does. Choose one that doesn't keep
+     queries, or use the city's address dataset for Norfolk.
+   - **What it doesn't solve:** authorship. The gateway knows a person
+     clicked, not who they are. So blips stay aggregate-only and unsigned, and
+     a determined group of real people can still pile into one cell. The
+     indexer shows spikes as spikes instead of averaging them in.
+   - **Test before building:** give ChatGPT, Gemini and claude.ai (free tiers)
+     a link template and see whether each prints a correct, clickable link
+     from a sentence like "the storm drain on Colley by the Harris Teeter
+     floods."
 
 ## Phases
 - **0 — Repo + lexicons + this plan.** Lexicon JSON validated the way skymap did
@@ -119,3 +175,6 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
    audiences differ.
 4. **Does Siren write** (its own DID, publishing mirrors), or only read?
 5. **Who signs off,** and is that where an atproto-iroh Table comes in?
+6. **Blips:** which geocoder does the confirm page use for addresses in the
+   URL fragment (a third party, or Norfolk's own address data)? And should the
+   gateway DID be Siren's, or a separate one?
