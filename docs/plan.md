@@ -125,13 +125,23 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
        (an invisible challenge, no button) would make it truly one click, but
        it gives up the confirmation step, and agents that drive a real browser
        would pass the challenge. Don't.
-   - **Location is H3 all the way; no geocoder (Jason, 2026-10-20).** The
-     agent puts its best-guess `lat`/`lng` (or an `h3` cell) in the URL
+   - **Location: H3 cells, with Nominatim for addresses (Jason, 2026-10-20).**
+     The agent puts an `addr` and its best-guess `lat`/`lng` in the URL
      *fragment*, which browsers never send to the server. The confirm page
-     snaps it to a res-8 cell with h3-js in the browser, the same cells as
-     the atproto maps, and the person taps the right cell if the guess is
-     off. No address is ever written down, and no geocoding service sees one.
-     The magic-link test measures how far off agents' guesses land, in rings.
+     geocodes the `addr` with Nominatim (OpenStreetMap's geocoder) and falls
+     back to the agent's coordinates. It snaps the result to a res-8 cell with
+     h3-js, the same cells as the atproto maps, and the person taps the right
+     cell if it's off. Only the cell is submitted.
+     - **Call it from the browser, not the gateway**, so our server never sees
+       an address. Nominatim's operator does see the address and the person's
+       IP. Their log retention is unchecked, so check it before launch.
+     - **The public instance won't carry a swarm.** Its usage policy allows at
+       most 1 request/s per application, requires an identifying User-Agent
+       or Referer, and asks for caching. That's fine for the test and a small
+       pilot. At scale, self-host Nominatim on a Virginia extract (not on
+       Workers: it needs Postgres) or use a hosted Nominatim provider.
+     - **Baseline:** 11 of 11 test queries landed in the true cell
+       (`experiments/magic-link-test/README.md`).
    - **The ladder (Jason, 2026-10-20).** The confirm page offers optional
      sign-in, and each rung upgrades the same blip. None of them needs an app
      installed.

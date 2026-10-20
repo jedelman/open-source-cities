@@ -68,3 +68,16 @@ test('fetch: a matching code word is a real fetch; a different one was made up',
   assert.equal(scoreFetch({ case: 'c1', reported_word: 'egret-5', logged_word: 'heron-12' }).madeUp, true);
   assert.equal(scoreFetch({ case: 'c1', reported_word: null, logged_word: null }).pass, false);
 });
+
+test('the address path scores what the geocoder makes of addr', async () => {
+  const { scoreAddr } = await import('../experiments/magic-link-test/score.js');
+  const { lat, lng } = at('c4');
+  const r = scoreReply('c4', link(`cat=sidewalk&addr=235+E+Plume+St,+Norfolk,+VA&lat=0&lng=0`));
+  assert.equal(r.addr, '235 E Plume St, Norfolk, VA');
+  assert.equal(r.pass, false); // its coordinates are nowhere near
+  const good = await scoreAddr(r, async () => ({ lat, lng }));
+  assert.equal(good.addrPass, true);
+  const none = await scoreAddr(r, async () => null);
+  assert.equal(none.addrPass, undefined);
+  assert.equal(none.addrProblem, 'no geocoder result');
+});

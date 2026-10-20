@@ -40,10 +40,13 @@ it needs Jason's DNS.
 
 ## 2026-10-20 — Blips (Jason)
 
-**Location: H3, no geocoder.** "Use H3, same as our atproto maps." The agent's
-lat/lng guess, or an `h3` cell, rides in the URL fragment. The confirm page
-snaps it to a res-8 cell in the browser, and the person taps to correct it. No
-address is written anywhere, and no geocoding service sees one.
+**Location: H3 cells, with Nominatim for addresses.** "Use H3, same as our
+atproto maps," then, the same day, "can we use Nominatim?" The agent's `addr`
+and lat/lng guess ride in the URL fragment. The confirm page geocodes the
+address with Nominatim *from the browser* (our server never sees it), snaps the
+result to a res-8 cell, and the person taps to correct it. Only the cell is
+submitted. The public Nominatim instance (≤1 request/s) does for the test and
+a pilot; self-host or use a hosted provider at scale.
 
 **Gateway: we operate it for now, federated by design.** "I'm seeing it as
 something that can be federated since writes are non-conflicting." Each

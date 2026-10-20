@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Scores chatbot replies from the magic-link test against cases.json.
 //   node experiments/magic-link-test/score.js experiments/magic-link-test/results/*.jsonl
+//   add --geocode to also score the agent's `addr` through Nominatim (cached,
+//   at most 1 request/s, per its usage policy).
 // Each results line: {"agent","tier","date","variant":"link","case","reply"}
 // or, for variant B: {"agent","tier","date","variant":"fetch","case","reported_word","logged_word"}.
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { latLngToCell, gridDistance, greatCircleDistance, isValidCell, getResolution } from 'h3-js';
 
@@ -33,6 +35,7 @@ export function scoreReply(caseId, reply) {
   const params = new URLSearchParams(out.fragment ? url.hash.slice(1) : url.search);
   if (!out.fragment && url.search) out.problem = 'fields in the query string, not the fragment';
 
+  out.addr = params.get('addr');
   const cat = params.get('cat');
   out.category = cat;
   out.categoryValid = categories.includes(cat);
@@ -58,6 +61,35 @@ export function scoreReply(caseId, reply) {
   return out;
 }
 
+// The address path: what Nominatim makes of the agent's `addr`, in rings from
+// the truth cell. `geocode` is injected so tests stay offline.
+export async function scoreAddr(result, geocode) {
+  const c = CASES[result.case];
+  if (c.decline || !result.addr) return { ...result, addrRings: null };
+  const hit = await geocode(result.addr);
+  if (!hit) return { ...result, addrRings: null, addrProblem: 'no geocoder result' };
+  let addrRings = null;
+  try { addrRings = gridDistance(latLngToCell(hit.lat, hit.lng, RES), latLngToCell(c.truth.lat, c.truth.lng, RES)); } catch {}
+  const addrPass = result.categoryMatch !== 'wrong' && result.fragment && addrRings !== null && addrRings <= 1;
+  return { ...result, addrRings, addrPass };
+}
+
+// Nominatim's public instance: identify ourselves, 1 request/s, cache.
+export function nominatim(cachePath) {
+  const cache = cachePath && existsSync(cachePath) ? JSON.parse(readFileSync(cachePath, 'utf8')) : {};
+  return async (addr) => {
+    if (!(addr in cache)) {
+      await new Promise((r) => setTimeout(r, 1100));
+      const u = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=us&q=' + encodeURIComponent(addr);
+      const res = await fetch(u, { headers: { 'User-Agent': 'open-source-cities magic-link test (github.com/jedelman/open-source-cities)' } });
+      const [hit] = res.ok ? await res.json() : [];
+      cache[addr] = hit ? { lat: Number(hit.lat), lng: Number(hit.lon) } : null;
+      if (cachePath) writeFileSync(cachePath, JSON.stringify(cache, null, 1));
+    }
+    return cache[addr];
+  };
+}
+
 export function scoreFetch(row) {
   const fetched = !!row.logged_word && row.reported_word?.trim().toLowerCase() === row.logged_word.trim().toLowerCase();
   return { case: row.case, pass: fetched, fetched, madeUp: !!row.reported_word && !fetched };
@@ -75,20 +107,29 @@ export function summarize(rows) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const files = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const geocodeOn = args.includes('--geocode');
+  const files = args.filter((a) => a !== '--geocode');
+  const geocode = geocodeOn ? nominatim(fileURLToPath(new URL('./results/.geocode-cache.json', import.meta.url))) : null;
   if (!files.length) { console.error('usage: score.js results/*.jsonl'); process.exit(1); }
   const rows = files.flatMap((f) => readFileSync(f, 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l)));
   for (const [agent, s] of Object.entries(summarize(rows))) {
     console.log(`\n## ${agent}`);
+    if (geocode) for (let i = 0; i < s.link.length; i++) s.link[i] = await scoreAddr(s.link[i], geocode);
     for (const r of s.link) {
       const detail = CASES[r.case].decline
         ? (r.declined ? 'declined (good)' : `wrote a link: ${r.link}`)
         : r.link ? `cat=${r.category} (${r.categoryMatch}) rings=${r.rings ?? '—'}${r.km !== undefined ? ` ${r.km} km` : ''}${r.problem ? ` · ${r.problem}` : ''}`
         : r.problem;
-      console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${r.case}  ${detail}`);
+      const addr = geocode && !CASES[r.case].decline ? `  | addr ${r.addrPass ? 'PASS' : 'FAIL'} rings=${r.addrRings ?? '—'}` : '';
+      console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${r.case}  ${detail}${addr}`);
     }
     for (const r of s.fetch) console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${r.case}  fetch: ${r.fetched ? 'real fetch' : r.madeUp ? 'code word made up' : 'no fetch'}`);
     const all = [...s.link, ...s.fetch];
-    console.log(`→ ${all.filter((r) => r.pass).length}/${all.length} pass`);
+    console.log(`→ ${all.filter((r) => r.pass).length}/${all.length} pass (agent's coordinates)`);
+    if (geocode) {
+      const located = s.link.filter((r) => !CASES[r.case].decline);
+      console.log(`→ ${located.filter((r) => r.addrPass).length}/${located.length} pass (agent's address → Nominatim)`);
+    }
   }
 }

@@ -35,8 +35,18 @@ means the agent made it up, which is also worth knowing.
    ```
 3. Score:
    ```bash
-   node experiments/magic-link-test/score.js experiments/magic-link-test/results/*.jsonl
+   node experiments/magic-link-test/score.js --geocode experiments/magic-link-test/results/*.jsonl
    ```
+   Each case is scored two ways from the same reply: the agent's own
+   coordinates, and its `addr` run through Nominatim (`--geocode`; cached in
+   `results/.geocode-cache.json`, at most 1 request/s per Nominatim's usage
+   policy). Leave out `--geocode` to stay offline.
+
+**Nominatim baseline (2026-10-20):** the eight cases' addresses and landmark
+names (11 queries) all landed in the true res-8 cell. One, 113 Waterside
+Drive, matched the road rather than the building, 752 m off but still in the
+same cell. So if agents write a decent address, the geocoder isn't the weak
+link.
 
 **Variant B** needs `probe-worker.js` deployed (commands at the top of the
 file; it needs a Cloudflare login) and the host in `instructions.md` changed
