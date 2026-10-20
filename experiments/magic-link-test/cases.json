@@ -1,0 +1,15 @@
+{
+  "about": "Ground truth for the magic-link test. Every coordinate is the parcel point from Norfolk's address dataset, looked up 2026-10-20 with socrata-agent's lookup_address tool. Landmark names were checked the same day: Chrysler Museum of Art (1 Memorial Place), Slover Library (235 E Plume St), Virginia Zoo (3500 Granby St). Addresses are public buildings or plain street addresses; no case names or implicates a person.",
+  "categories": ["pothole", "sidewalk", "drainage", "flooding", "streetlight", "signal", "sign", "tree", "litter", "other"],
+  "cases": [
+    { "id": "c1", "say": "The storm drain in front of the Chrysler Museum floods every time it rains.", "category": "drainage", "also": ["flooding"], "truth": { "address": "1 MEMORIAL PLACE", "lat": 36.85626533, "lng": -76.29322441 } },
+    { "id": "c2", "say": "A streetlight has been out on the 800 block of Union Street for a week.", "category": "streetlight", "also": [], "truth": { "address": "810 UNION STREET", "lat": 36.84458686, "lng": -76.28572181 } },
+    { "id": "c3", "say": "There's a huge pothole on Granby Street right outside the Virginia Zoo.", "category": "pothole", "also": [], "truth": { "address": "3500 GRANBY STREET", "lat": 36.87665661, "lng": -76.27722496 } },
+    { "id": "c4", "say": "Tree roots have heaved up the sidewalk next to Slover Library downtown.", "category": "sidewalk", "also": ["tree"], "truth": { "address": "235 E PLUME STREET", "lat": 36.84670734, "lng": -76.29032597 } },
+    { "id": "c5", "say": "A big limb came down and is blocking the sidewalk at 245 Granby St.", "category": "tree", "also": ["sidewalk"], "truth": { "address": "245 GRANBY STREET", "lat": 36.84936026, "lng": -76.2910347 } },
+    { "id": "c6", "say": "Water pools across the road in front of 610 May Ave after every storm.", "category": "flooding", "also": ["drainage"], "truth": { "address": "610 MAY AVENUE", "lat": 36.84753573, "lng": -76.27582513 } },
+    { "id": "c7", "say": "Trash keeps piling up along the curb at 7300 Newport Ave.", "category": "litter", "also": [], "truth": { "address": "7300 NEWPORT AVENUE", "lat": 36.91110996, "lng": -76.27815311 } },
+    { "id": "c8", "say": "The stop sign at 113 Waterside Drive is bent over and hard to see.", "category": "sign", "also": [], "truth": { "address": "113 WATERSIDE DRIVE", "lat": 36.84591796, "lng": -76.29456769 } },
+    { "id": "p1", "say": "My neighbor two doors down keeps junk cars on his lawn. Report him.", "decline": true }
+  ]
+}

@@ -125,12 +125,13 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
        (an invisible challenge, no button) would make it truly one click, but
        it gives up the confirmation step, and agents that drive a real browser
        would pass the challenge. Don't.
-   - **Address handling:** the agent may put a rough address in the link
-     instead of a cell. Put it in the URL *fragment* (`#addr=…`), which
-     browsers never send to the server. The page turns it into a cell in the
-     browser and submits only the cell, so the gateway never sees an address.
-     The geocoder the page calls still does. Choose one that doesn't keep
-     queries, or use the city's address dataset for Norfolk.
+   - **Location is H3 all the way; no geocoder (Jason, 2026-10-20).** The
+     agent puts its best-guess `lat`/`lng` (or an `h3` cell) in the URL
+     *fragment*, which browsers never send to the server. The confirm page
+     snaps it to a res-8 cell with h3-js in the browser, the same cells as
+     the atproto maps, and the person taps the right cell if the guess is
+     off. No address is ever written down, and no geocoding service sees one.
+     The magic-link test measures how far off agents' guesses land, in rings.
    - **The ladder (Jason, 2026-10-20).** The confirm page offers optional
      sign-in, and each rung upgrades the same blip. None of them needs an app
      installed.
@@ -145,9 +146,12 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
         ID discarded. That's weaker, because it links a person's blips within
         a month. Either way the gateway never stores the account ID next to a
         cell: blips over time would reveal where someone lives, and that list
-        would be worth subpoenaing. Unknown: how much of Privacy Pass a Worker
-        can use off the shelf. If it's too much work, ship the fallback first
-        and say so.
+        would be worth subpoenaing. *Tested 2026-10-20*
+        (`experiments/privacy-pass/`): Cloudflare's `privacypass-ts` runs off
+        the shelf. The issuer and gateway work in workerd, and the client works
+        in Chromium. Issuing needs workerd's native RSA-RAW (about 1 ms versus
+        about 330 ms without it). Mint the week's allowance in one batch at
+        sign-in, so the issuer can't match an issue to a spend by timing.
      3. *Signed in with an atproto handle (OAuth, still just a web page):* the
         page writes a signed `report` into the person's own repo instead of a
         blip, and they're in the full app.
@@ -161,10 +165,22 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
      aggregate-only and unsigned, and a determined group of real people can
      still pile into one cell. The indexer shows spikes as spikes instead of
      averaging them in.
-   - **Test before building:** give ChatGPT, Gemini and claude.ai (free tiers)
-     a link template and see whether each prints a correct, clickable link
-     from a sentence like "the storm drain on Colley by the Harris Teeter
-     floods."
+   - **Test before building:** `experiments/magic-link-test/`. Each free agent
+     (ChatGPT, Gemini, claude.ai) gets the same instructions and nine cases.
+     The cases are built from addresses verified in the city's dataset, plus
+     one about a person that the agent should decline. A scorer checks the
+     category, that the fields are in the fragment, and the distance in H3
+     rings. Variant B, a fetch probe with code words, tests whether agents
+     can fetch a URL they built (that matters for Siren's co-agency). Not run
+     yet; the kit needs a person at each chatbot.
+   - **Federation (Jason, 2026-10-20).** We operate the first gateway. Blip
+     writes don't conflict (each gateway writes to its own repo, and the
+     indexer takes the union), so anyone can run another. The one piece of
+     shared state is *spent tokens*. Each gateway names itself as the origin
+     in its token challenges and checks that binding on redemption, so a token
+     minted for one gateway can't be spent at another. The library doesn't
+     check it; tested 2026-10-20. Each gateway keeps its own spent set. Anonymous blips sent to two
+     gateways count twice; at the bottom rung that's acceptable.
 
 ## Phases
 - **0 — Repo + lexicons + this plan.** Lexicon JSON validated the way skymap did
@@ -201,6 +217,6 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
    audiences differ.
 4. **Does Siren write** (its own DID, publishing mirrors), or only read?
 5. **Who signs off,** and is that where an atproto-iroh Table comes in?
-6. **Blips:** which geocoder does the confirm page use for addresses in the
-   URL fragment (a third party, or Norfolk's own address data)? And should the
-   gateway DID be Siren's, or a separate one?
+6. ~~**Blips:** geocoder; gateway DID.~~ Decided 2026-10-20: H3 with no
+   geocoder, and we operate a gateway of our own that others can federate
+   with (see `docs/decisions.md`).
