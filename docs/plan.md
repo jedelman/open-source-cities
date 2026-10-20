@@ -183,6 +183,17 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
      rings. Variant B, a fetch probe with code words, tests whether agents
      can fetch a URL they built (that matters for Siren's co-agency). Not run
      yet; the kit needs a person at each chatbot.
+   - **Onboarding is one paste (Jason, 2026-10-20).** No model will know the
+     link format from general knowledge, so the person gives it to their
+     agent once, in either of two ways:
+     a link ("read oscity.jason-edelman.org/agents and help me report
+     something"), which the agent fetches to get the instructions, or the
+     instruction block itself, pasted. Both are fine. The paste works today
+     (Gemini, 8 of 8 on content). The link needs a live host and an agent
+     that fetches (variant B of the test). Both should serve the same text, so
+     the instructions live in one file. Installed carriers (a custom GPT, a
+     Gem, a connector) would skip even that step. Which free tiers allow them
+     is unchecked.
    - **Federation (Jason, 2026-10-20).** We operate the first gateway. Blip
      writes don't conflict (each gateway writes to its own repo, and the
      indexer takes the union), so anyone can run another. The one piece of
