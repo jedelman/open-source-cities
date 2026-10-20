@@ -4,6 +4,7 @@
 //   add --geocode to also score the agent's `addr` through Nominatim (cached,
 //   at most 1 request/s, per its usage policy).
 // Each results line: {"agent","tier","date","variant":"link","case","reply"}
+// Optional "wrapped_by": the host of a wrapper seen on the link target.
 // or, for variant B: {"agent","tier","date","variant":"fetch","case","reported_word","logged_word"}.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -116,7 +117,17 @@ export function summarize(rows) {
     const key = `${row.agent} (${row.tier ?? '?'}, ${row.date ?? '?'})`;
     const s = (by[key] ??= { link: [], fetch: [] });
     if (row.variant === 'fetch') s.fetch.push(scoreFetch(row));
-    else s.link.push(scoreReply(row.case, row.reply));
+    else {
+      const r = scoreReply(row.case, row.reply);
+      // The tester can record a wrapper seen on the link target when the reply
+      // text they copied shows the bare URL (Gemini, 2026-10-20).
+      if (row.wrapped_by && r.link && !r.wrapped) {
+        r.wrapped = row.wrapped_by;
+        r.pass = false;
+        r.problem = `content scored, but the link is wrapped in a ${row.wrapped_by} search link`;
+      }
+      s.link.push(r);
+    }
   }
   return by;
 }
