@@ -131,10 +131,36 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
      browser and submits only the cell, so the gateway never sees an address.
      The geocoder the page calls still does. Choose one that doesn't keep
      queries, or use the city's address dataset for Norfolk.
-   - **What it doesn't solve:** authorship. The gateway knows a person
-     clicked, not who they are. So blips stay aggregate-only and unsigned, and
-     a determined group of real people can still pile into one cell. The
-     indexer shows spikes as spikes instead of averaging them in.
+   - **The ladder (Jason, 2026-10-20).** The confirm page offers optional
+     sign-in, and each rung upgrades the same blip. None of them needs an app
+     installed.
+     1. *Anonymous:* Submit + Turnstile gives a blip, counted as a click.
+     2. *Signed in with Google, Apple or Microsoft (OpenID Connect):* a blip
+        counted as a person. This counts people, not clicks, and gives a
+        per-person rate limit. It must stay **unlinkable**. Sign-in mints a
+        small weekly allowance of blind-signed tokens (Privacy Pass, RFC
+        9576–9578), and each blip spends one. The gateway can check that a
+        token is valid but can't tell which sign-in it came from. *Fallback:*
+        a keyed hash of the account ID, with the key rotated monthly and the
+        ID discarded. That's weaker, because it links a person's blips within
+        a month. Either way the gateway never stores the account ID next to a
+        cell: blips over time would reveal where someone lives, and that list
+        would be worth subpoenaing. Unknown: how much of Privacy Pass a Worker
+        can use off the shelf. If it's too much work, ship the fallback first
+        and say so.
+     3. *Signed in with an atproto handle (OAuth, still just a web page):* the
+        page writes a signed `report` into the person's own repo instead of a
+        blip, and they're in the full app.
+     Sign-in is an upgrade, never a gate. The index shows the rungs apart:
+     "9 people, plus 23 anonymous blips; 2 signed reports." *Tension:* the
+     identity providers become the ones who vouch that someone is a person.
+     They see that someone used a civic tool, and they can cut it off. That's
+     tolerable as one option among several that only ever upgrades a blip.
+   - **What it doesn't solve:** authorship below rung 3. The gateway knows a
+     person clicked, or that some account exists, not who signed. So blips stay
+     aggregate-only and unsigned, and a determined group of real people can
+     still pile into one cell. The indexer shows spikes as spikes instead of
+     averaging them in.
    - **Test before building:** give ChatGPT, Gemini and claude.ai (free tiers)
      a link template and see whether each prints a correct, clickable link
      from a sentence like "the storm drain on Colley by the Harris Teeter
