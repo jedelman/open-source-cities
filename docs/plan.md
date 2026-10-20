@@ -132,6 +132,10 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
      back to the agent's coordinates. It snaps the result to a res-8 cell with
      h3-js, the same cells as the atproto maps, and the person taps the right
      cell if it's off. Only the cell is submitted.
+     - **Strip the address once it's used.** After geocoding, the page
+       removes it from the URL (`history.replaceState`), so browser history
+       keeps only the cell. It matters most when the address is the person's
+       own ("outside my front door"; ChatGPT asked for it, 2026-10-20).
      - **Call it from the browser, not the gateway**, so our server never sees
        an address. Nominatim's operator does see the address and the person's
        IP. Their log retention is unchecked, so check it before launch.

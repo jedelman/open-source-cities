@@ -6,7 +6,16 @@
   fragment, so nothing about the report reaches the server, but the gateway
   learns the click came from ChatGPT. The confirm page should ignore the
   query string, and the gateway should never log it.
-- **Refused to infer the person's location.** Jason asked for a report that
-  would need ChatGPT to guess where he was, and it refused. That's the
-  behavior we want: location comes from what the person says, never from
-  what the agent can infer about them. Exact wording not recorded.
+- **Asked back instead of inferring the person's location.** Verbatim:
+  > **Jason:** There's a pothole outside my front door.
+  > **ChatGPT:** What's the street address, or the nearest address to the pothole?
+
+  It didn't guess, and it didn't refuse outright: it asked. That's the
+  co-agency "ask back" move, done by the agent without being told. Location
+  comes from what the person says, never from what the agent infers.
+
+  **Design consequence:** "outside my front door" means the person's own
+  address ends up in the link fragment. It never reaches our server, but it
+  does reach Nominatim, and it sits in the browser's history. The confirm
+  page should geocode it, then strip it from the URL (`history.replaceState`)
+  so that only the cell remains, and it should never keep the address.
