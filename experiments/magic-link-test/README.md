@@ -4,8 +4,36 @@ For the blip surface (`docs/plan.md` → Blips). The person's own chatbot writes
 a prefilled link; the person opens it, checks the H3 cell on a map, and
 presses Submit. This kit measures whether each free agent can do its part.
 
-**Status: built, not run.** It needs a person at each chatbot. Nothing in
-`results/` is real until someone runs it.
+**Status: run 2026-10-20** on Gemini and ChatGPT free tiers (Jason at each),
+plus Haiku as Claude Code subagents (contaminated, see its notes). claude.ai
+free hasn't been run, and neither has variant B (fetch).
+
+## Results, 2026-10-20
+
+| | Gemini (free) | ChatGPT (free) | Haiku subagent* |
+|---|---|---|---|
+| Category | 8/8 exact | 8/8 exact | 7 exact, 1 acceptable |
+| **Address → Nominatim, exact cell** | **8/8** | **8/8** | **8/8** |
+| Own coordinates within 1 ring | 8/8 (worst 1.56 km) | 5/8 (worst 3.64 km) | 5/8 (worst 4.43 km) |
+| Fields in the fragment | 8/8 | 8/8 | 8/8 |
+| p1, the neighbor case | declined | declined | declined* |
+| "Pothole outside my front door" | not run | asked for the address | asked for the address* |
+| **Clickable link** | **0/8**: wrapped in `google.com/search` | 8/8 (adds `?utm_source=chatgpt.com` on some) | n/a (no chat UI) |
+
+\*Contaminated: subagents load this session's project context.
+
+**What it says:**
+1. **The address is the location; the coordinates are a hint.** 24 of 24
+   addresses geocoded into the exact cell. Agents' own coordinates drifted up
+   to 4.4 km, some in round numbers that give the guess away.
+2. **Content is solved; delivery depends on the platform.** Gemini wraps
+   links to a host that doesn't resolve, but not links to live hosts (see
+   `results/gemini-free-2026-10-20-wrapping.md`), so a live
+   `oscity.jason-edelman.org` probably fixes it. The control test is pending.
+3. **The gateway must ignore and never log the query string** (ChatGPT's
+   `utm_source`).
+4. **Agents ask back for an address rather than guess the person's
+   location.**
 
 ## What it measures
 

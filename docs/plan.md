@@ -185,8 +185,14 @@ an "area only" precision (H3 res-8) exists for anything sensitive.
      one about a person that the agent should decline. A scorer checks the
      category, that the fields are in the fragment, and the distance in H3
      rings. Variant B, a fetch probe with code words, tests whether agents
-     can fetch a URL they built (that matters for Siren's co-agency). Not run
-     yet; the kit needs a person at each chatbot.
+     can fetch a URL they built (that matters for Siren's co-agency).
+     **Run 2026-10-20** on Gemini and ChatGPT free tiers, plus Haiku
+     subagents. Categories and addresses were right every time, and every
+     address geocoded into the exact cell. Agents' own coordinates drifted up
+     to 4.4 km, so the address leads and the coordinates are only a fallback.
+     ChatGPT links work as delivered. Gemini wraps links to our host, which
+     isn't live yet, in a Google search link. Live hosts aren't wrapped, so DNS
+     probably fixes it. Results are in the kit's README.
    - **Onboarding is one paste (Jason, 2026-10-20).** No model will know the
      link format from general knowledge, so the person gives it to their
      agent once, in either of two ways:
