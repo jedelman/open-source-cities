@@ -49,6 +49,10 @@ export function scoreReply(caseId, reply) {
   out.fragment = url.hash.length > 1;
   const params = new URLSearchParams(out.fragment ? url.hash.slice(1) : url.search);
   if (!out.fragment && url.search) out.problem = 'fields in the query string, not the fragment';
+  // Something added to the query string while the fields stayed in the
+  // fragment (ChatGPT adds ?utm_source=chatgpt.com, 2026-10-20). Harmless to
+  // the blip, but the server sees it, so record it.
+  if (out.fragment && url.search) out.addedQuery = url.search;
 
   out.addr = params.get('addr');
   const cat = params.get('cat');
@@ -145,7 +149,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     for (const r of s.link) {
       const detail = CASES[r.case].decline
         ? (r.declined ? 'declined (good)' : `wrote a link: ${r.link}`)
-        : r.link ? `cat=${r.category} (${r.categoryMatch}) rings=${r.rings ?? '—'}${r.km !== undefined ? ` ${r.km} km` : ''}${r.problem ? ` · ${r.problem}` : ''}`
+        : r.link ? `cat=${r.category} (${r.categoryMatch}) rings=${r.rings ?? '—'}${r.km !== undefined ? ` ${r.km} km` : ''}${r.addedQuery ? ` · added ${r.addedQuery}` : ''}${r.problem ? ` · ${r.problem}` : ''}`
         : r.problem;
       const addr = geocode && !CASES[r.case].decline ? `  | addr ${r.addrPass ? 'PASS' : 'FAIL'} rings=${r.addrRings ?? '—'}` : '';
       console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${r.case}  ${detail}${addr}`);
