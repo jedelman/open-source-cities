@@ -15,21 +15,35 @@ export const PATH = '/blip';
 const { cases, categories } = JSON.parse(readFileSync(new URL('./cases.json', import.meta.url)));
 export const CASES = Object.fromEntries(cases.map((c) => [c.id, c]));
 
-// The first URL on our host in a reply, if any.
-export function extractLink(reply) {
-  const m = String(reply ?? '').match(/https?:\/\/[^\s)<>"'`\]]+/g) ?? [];
-  return m.find((u) => { try { return new URL(u).hostname === HOST; } catch { return false; } }) ?? null;
+const onHost = (u) => { try { return new URL(u).hostname === HOST; } catch { return false; } };
+
+// The first link to our host in a reply: { link, wrapped }. Some agents
+// (Gemini, 2026-10-20) wrap a URL in a search link, so the person's click goes
+// to a search page instead, and the whole link, fragment and all, goes to the
+// search engine as a query. We unwrap it to score the content, but record the
+// wrapper, since a wrapped link doesn't do its job.
+export function findLink(reply) {
+  const urls = String(reply ?? '').match(/https?:\/\/[^\s)<>"'`\]]+/g) ?? [];
+  for (const u of urls) {
+    if (onHost(u)) return { link: u, wrapped: null };
+    let outer;
+    try { outer = new URL(u); } catch { continue; }
+    const inner = outer.searchParams.get('q') ?? outer.searchParams.get('url');
+    if (inner && onHost(inner)) return { link: inner, wrapped: outer.hostname };
+  }
+  return { link: null, wrapped: null };
 }
+export const extractLink = (reply) => findLink(reply).link;
 
 export function scoreReply(caseId, reply) {
   const c = CASES[caseId];
   if (!c) throw new Error(`unknown case ${caseId}`);
-  const link = extractLink(reply);
+  const { link, wrapped } = findLink(reply);
   if (c.decline) return { case: caseId, pass: link === null, declined: link === null, link };
   if (!link) return { case: caseId, pass: false, link: null, problem: 'no link' };
 
   const url = new URL(link);
-  const out = { case: caseId, link, path: url.pathname === PATH };
+  const out = { case: caseId, link, wrapped, path: url.pathname === PATH };
   // Fields belong in the fragment, which never reaches the server.
   out.fragment = url.hash.length > 1;
   const params = new URLSearchParams(out.fragment ? url.hash.slice(1) : url.search);
@@ -57,7 +71,8 @@ export function scoreReply(caseId, reply) {
   try { out.rings = gridDistance(cell, truth); } catch { out.rings = null; } // null: too far to measure
   // Pass: right category (or an acceptable one) and the cell on or next to the
   // truth, so the person has at most one tap to fix it on the confirm page.
-  out.pass = out.path && out.fragment && out.categoryMatch !== 'wrong' && out.rings !== null && out.rings <= 1;
+  out.pass = !wrapped && out.path && out.fragment && out.categoryMatch !== 'wrong' && out.rings !== null && out.rings <= 1;
+  if (wrapped) out.problem = `content scored, but the link is wrapped in a ${wrapped} search link`;
   return out;
 }
 
@@ -70,7 +85,7 @@ export async function scoreAddr(result, geocode) {
   if (!hit) return { ...result, addrRings: null, addrProblem: 'no geocoder result' };
   let addrRings = null;
   try { addrRings = gridDistance(latLngToCell(hit.lat, hit.lng, RES), latLngToCell(c.truth.lat, c.truth.lng, RES)); } catch {}
-  const addrPass = result.categoryMatch !== 'wrong' && result.fragment && addrRings !== null && addrRings <= 1;
+  const addrPass = !result.wrapped && result.categoryMatch !== 'wrong' && result.fragment && addrRings !== null && addrRings <= 1;
   return { ...result, addrRings, addrPass };
 }
 

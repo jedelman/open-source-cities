@@ -81,3 +81,13 @@ test('the address path scores what the geocoder makes of addr', async () => {
   assert.equal(none.addrPass, undefined);
   assert.equal(none.addrProblem, 'no geocoder result');
 });
+
+test('a link wrapped in a search link is unwrapped for scoring but fails', () => {
+  const { lat, lng } = at('c1');
+  const inner = link(`cat=drainage&lat=${lat}&lng=${lng}`);
+  const r = scoreReply('c1', 'https://www.google.com/search?q=' + encodeURIComponent(inner));
+  assert.equal(r.wrapped, 'www.google.com');
+  assert.equal(r.categoryMatch, 'exact');
+  assert.equal(r.rings, 0);
+  assert.equal(r.pass, false);
+});
